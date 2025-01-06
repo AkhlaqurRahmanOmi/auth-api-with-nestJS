@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post,Put,Delete } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignUpDto } from './dto/signup.dto';
 import {OtpService} from './otp_verification/otp_verification.service';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { UpdateUserDto } from './dto/updateUser.dto';
 
 @ApiTags('Authentication')
 @Controller("api/v1")
@@ -92,28 +93,40 @@ export class AuthController {
   async login(@Body() user: { email: string; password: string }) {
     return this.authService.login(user);
   }
+  // Update user details
+  @Put('user/:id')
+  @ApiOperation({
+    summary: 'Update user details',
+    description: 'Update the details of an existing user.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User details updated successfully.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found.',
+  })
+  async updateUser(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.authService.updateUser(id, updateUserDto);
+  }
 
-  //OTP generation method
-  // @Post('generate')
-  // @ApiOperation({
-  //   summary: 'Generate and send OTP',
-  //   description: 'Generates a One-Time Password (OTP) and sends it to the provided email.',
-  // })
-  // @ApiResponse({ status: 200, description: 'OTP sent successfully.' })
-  // @ApiBody({ type: GenerateOtpDto })
-  // async generateOtp(@Body() generateOtpDto: GenerateOtpDto) {
-  //   console.log('Received Email:', generateOtpDto.email); // Debug log
-  //   const { email }  = generateOtpDto;
-
-  //   // Ensure the email exists in the request body
-  //   if (!email) {
-  //     throw new Error('Email not provided'); // Add error handling if email is missing
-  //   }
-
-  //   // Call the OtpService correctly
-  //   await this.otpService.generateAndSendOtp(email);
-
-  //   return { message: 'OTP sent successfully.' };
-  // }
+  // Soft delete user by updating deletedAt
+  @Delete('user/:id')
+  @ApiOperation({
+    summary: 'Soft delete a user',
+    description: 'Marks a user as deleted by updating the deletedAt field.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User soft-deleted successfully.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found.',
+  })
+  async deleteUser(@Param('id') id: string) {
+    return this.authService.deleteUser(id);
+  }
 
 }

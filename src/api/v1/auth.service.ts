@@ -4,6 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { SignUpDto } from './dto/signup.dto'; // Ensure SignUpDto is properly created
 import { JwtService } from '../v1/jwt/jwt.service';
 import { LoginDto } from './dto/login.dto'; // Import JwtService
+import { UpdateUserDto } from './dto/updateUser.dto';
 
 @Injectable()
 export class AuthService {
@@ -212,8 +213,56 @@ export class AuthService {
     return { message: 'Onboarding step updated successfully' };
   }
 
+  //update user functionality
+  async updateUser(id: string, updateUserDto: UpdateUserDto) {
+    try {
+      // Check if user exists
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+      });
+      if (!user) {
+        throw new Error('User not found');
+      }
 
+      // Update user and Prisma will handle `updatedAt`
+      const updatedUser = await this.prisma.user.update({
+        where: { id },
+        data: {
+          ...updateUserDto,
+        },
+      });
 
+      return updatedUser;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  // Soft delete user by updating deletedAt
+  async deleteUser(id: string) {
+    try {
+      // Check if user exists
+      const user = await this.prisma.user.findUnique({ where: { id } });
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // Soft delete by updating deletedAt field
+      const updatedUser = await this.prisma.user.update({
+        where: { id },
+        data: {
+          deletedAt: new Date(), // Set current date as deletedAt
+        },
+      });
+
+      return {
+        message: 'User soft-deleted successfully',
+        user: updatedUser,
+      };
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
 
 
   // Placeholder Method
