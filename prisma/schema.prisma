@@ -1,0 +1,108 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+model User {
+  id                    String           @id @default(auto()) @map("_id") @db.ObjectId // MongoDB primary key
+  country               String
+  email                 String           @unique
+  fullName              String?
+  password              String
+  emailCode             String? // Code sent for email verification
+  emailVerified         Boolean          @default(false) // Email verification status
+  phoneNumber           String?
+  phoneCode             String? // Code sent for phone verification
+  phoneVerified         Boolean          @default(false) // Phone verification status
+  isEnabled             Boolean          @default(true) // Whether the user is enabled
+  triedAttempt          Int              @default(0) // Number of attempts for login
+  isLocked              Boolean          @default(false) // Whether the user is locked
+  isCertified           Boolean          @default(false) // Certification status
+  isOnBoardingCompleted Boolean          @default(false) // Whether onboarding is completed
+  currentStep           String?          @db.ObjectId // Current step in onboarding
+  nextStep              String?          @db.ObjectId // Next step in onboarding
+  onboardingStepsId     String?          @db.ObjectId
+  onboardingSteps       OnboardingSteps? @relation(fields: [onboardingStepsId], references: [id]) // Relation to OnBoardingSteps
+  profileId             String?          @db.ObjectId // Profile ID (if applicable)
+  userTypeId            String           @db.ObjectId // Foreign key to User Type
+  createdAt             DateTime         @default(now()) // Created date
+  updatedAt             DateTime         @updatedAt // Updated date
+  deletedAt             DateTime?
+  // Relations
+  userType              UserType         @relation(fields: [userTypeId], references: [id])
+  otps                  Otp[]            @relation("UserOtps") // Relation to OTPs (if any)
+
+  @@map("user") // Custom table name
+}
+
+//role
+model Role {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  title String @unique // Role title (e.g., Manager, Developer)
+
+  @@map("role")
+}
+
+//type of user
+model UserType {
+  id              String            @id @default(auto()) @map("_id") @db.ObjectId // MongoDB primary key
+  title           String
+  User            User[]
+  OnBoardingSteps OnboardingSteps[]
+
+  //time stamp
+
+  @@map("user_type")
+}
+
+//on Boarding steps
+model OnboardingSteps {
+  id               String             @id @default(auto()) @map("_id") @db.ObjectId
+  userTypeId       String
+  StepOfOnBoarding StepOfOnBoarding[]
+  userType         UserType           @relation(fields: [userTypeId], references: [id])
+  User             User[]
+
+  @@map("on_boarding_steps")
+}
+
+//types of onboarding as known as step
+model StepOfOnBoarding {
+  id                String          @id @default(auto()) @map("_id") @db.ObjectId
+  type              String // Type of the step (e.g., "Profile_Completion")
+  label             String // Display label for the step (e.g., "Complete your profile")
+  onBoardingStepsId String          @db.ObjectId // Foreign key to OnBoardingSteps
+  onBoardingSteps   OnboardingSteps @relation(fields: [onBoardingStepsId], references: [id]) // Relation to OnBoardingSteps
+
+  @@map("steps_of_on_boarding")
+}
+
+//otp model
+model Otp {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  otp       Int
+  email     String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  user      User?    @relation("UserOtps", fields: [userId], references: [id])
+  userId    String?  @db.ObjectId
+
+  @@map("otp")
+}
+
+model Employee {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  email String
+  name  String
+}
+
+model Candidate {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  name  String
+  email String
+}
+
